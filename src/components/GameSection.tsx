@@ -15,6 +15,8 @@ interface GameSectionProps {
   onRangeChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onGuessesChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSubmit: () => void;
+  createKeypair: () => void;
+  fundAccount: () => void; // Added fundAccount prop
 }
 
 const GameSection: React.FC<GameSectionProps> = ({
@@ -29,7 +31,9 @@ const GameSection: React.FC<GameSectionProps> = ({
   onMintToken,
   onRangeChange,
   onGuessesChange,
-  onSubmit
+  onSubmit,
+  createKeypair,
+  fundAccount // Destructure fundAccount
 }) => {
   return (
     <div className="game-section">
@@ -39,6 +43,8 @@ const GameSection: React.FC<GameSectionProps> = ({
         balance={balance}
         onRedeemClick={onRedeemClick}
         onMintToken={onMintToken}
+        createKeypair={createKeypair}
+        fundAccount={fundAccount} // Pass fundAccount to WalletInfo
       />
       {connected && (
         <MoveLette

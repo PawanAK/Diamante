@@ -1,5 +1,4 @@
 import React from 'react';
-import { WalletSelector } from "@aptos-labs/wallet-adapter-ant-design";
 
 interface WalletInfoProps {
   connected: boolean;
@@ -7,13 +6,17 @@ interface WalletInfoProps {
   balance: number;
   onRedeemClick: () => void;
   onMintToken: () => void;
+  createKeypair: () => void;
+  fundAccount: () => void; // Added fundAccount prop
 }
 
-const WalletInfo: React.FC<WalletInfoProps> = ({ connected, account, balance, onRedeemClick, onMintToken }) => {
+const WalletInfo: React.FC<WalletInfoProps> = ({ connected, account, balance, onRedeemClick, onMintToken, createKeypair, fundAccount }) => {
   if (!connected) {
     return (
       <div className="flex justify-center mb-4">
-        <WalletSelector />
+        <button onClick={createKeypair} className="bg-blue-500 text-white py-2 px-4 rounded mb-2">
+          Create Keypair
+        </button>
       </div>
     );
   }
@@ -23,18 +26,18 @@ const WalletInfo: React.FC<WalletInfoProps> = ({ connected, account, balance, on
       <button
         className="bg-blue-500 text-white py-2 px-4 rounded mb-2"
         onClick={() => {
-          if (account?.address) {
-            navigator.clipboard.writeText(account.address);
+          if (account?.publicKey) {
+            navigator.clipboard.writeText(account.publicKey);
           } else {
             console.error("No address available to copy.");
           }
         }}>
-        {account?.address
-          ? `${account.address.slice(0, 6)}...${account.address.slice(-4)}`
+        {account?.publicKey
+          ? `${account.publicKey.slice(0, 6)}...${account.publicKey.slice(-4)}`
           : "No Address"}
       </button>
       <div className="text-black text-center mb-2">
-        <p>Balance: $TELE {balance.toFixed(2)}</p>
+        <p>Balance: DIAM {balance.toFixed(2)}</p>
       </div>
       <button
         onClick={onRedeemClick}
@@ -44,7 +47,12 @@ const WalletInfo: React.FC<WalletInfoProps> = ({ connected, account, balance, on
       <button
         onClick={onMintToken}
         className="bg-green-500 text-white py-2 px-4 rounded mb-2">
-        Buy $TELE Tokens
+        Buy DIAM Tokens
+      </button>
+      <button
+        onClick={fundAccount} // Added fundAccount button
+        className="bg-purple-500 text-white py-2 px-4 rounded mb-2">
+        Fund Account
       </button>
     </div>
   );

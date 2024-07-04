@@ -1,18 +1,7 @@
 import React, { useState, ChangeEvent, useEffect } from "react";
 import goodimg from "../src/assets/good.jpg";
 import evilimg from "../src/assets/evil.jpg";
-import { WalletSelector } from "@aptos-labs/wallet-adapter-ant-design";
-import { useWallet } from "@aptos-labs/wallet-adapter-react";
-import {
-  Aptos,
-  Account,
-  Ed25519PrivateKey,
-  Serializer,
-  MoveVector,
-  U64,
-} from "@aptos-labs/ts-sdk";
-
-import "@aptos-labs/wallet-adapter-ant-design/dist/index.css";
+import axios from "axios";
 import "./App.css";
 
 import Header from './components/Header';
@@ -34,30 +23,6 @@ interface NFTItem {
   id: number;
 }
 
-export const aptos = new Aptos();
-export const moduleAddress =
-  "d7e864c4e6350c95955ad62eaacfc53f19eaa1ee2c197a7f9b36284c363889a8";
-
-const getFaBalance = async (
-  ownerAddress: string,
-  assetType: string
-): Promise<number> => {
-  const data = await aptos.getCurrentFungibleAssetBalances({
-    options: {
-      where: {
-        owner_address: { _eq: ownerAddress },
-        asset_type: { _eq: assetType },
-      },
-    },
-  });
-  return data[0]?.amount ?? 0;
-};
-
-const privateKey = new Ed25519PrivateKey(
-  "0xc18a9a158cc0ccfe95798f526cfb9b4ee07ade0f0216d9434d02fb8dc3f56bb0"
-);
-const admin = Account.fromPrivateKey({ privateKey });
-
 const App: React.FC = () => {
   const [range, setRange] = useState<Range>({ min: 1, max: 10 });
   const [guesses, setGuesses] = useState<string>("1");
@@ -67,9 +32,9 @@ const App: React.FC = () => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [balance, setBalance] = useState<number>(0);
   const [showGame, setShowGame] = useState<boolean>(false);
-  const { account, connected } = useWallet();
-  const token =
-    "0x65735cb9546ca07af21f4bef98ca581e30c3bdedf32c2a5d6c5e1419e95dee53";
+  const [account, setAccount] = useState<{ publicKey: string, secret: string } | null>(null);
+  const [connected, setConnected] = useState<boolean>(false);
+  const [fundingMessage, setFundingMessage] = useState<string>("");
 
   useEffect(() => {
     const guessArray = guesses.split(",").map(Number);
@@ -78,98 +43,75 @@ const App: React.FC = () => {
     console.log(win);
   }, [guesses]);
 
-  useEffect(() => {
-    const fetchBalance = async () => {
-      if (account) {
-        const balance = await getFaBalance(account.address, token);
-        setBalance(balance / 100000000);
-      }
-    };
+  const createKeypair = async () => {
+    try {
+      const response = await axios.post("http://localhost:3001/create-keypair");
+      setAccount(response.data);
+      setConnected(true);
+    } catch (error) {
+      console.error("Error creating keypair:", error);
+    }
+  };
 
-    if (connected) {
+  const fundAccount = async () => {
+    console.log('Fund Account button clicked');
+    if (account) {
+      try {
+        const response = await fetch('http://localhost:3001/fund-account', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ publicKey: account.publicKey }),
+        });
+        const data = await response.json();
+        console.log('Account funded:', data);
+        setFundingMessage(data.message);
+        fetchBalance(); // Update balance after funding
+      } catch (error) {
+        console.error('Error funding account:', error);
+        setFundingMessage('Error funding account.');
+      }
+    }
+  };
+
+  const fetchBalance = async () => {
+    if (account) {
+      try {
+        const response = await axios.get(`http://localhost:3001/get-balance?publicKey=${account.publicKey}`);
+        setBalance(response.data.balance);
+      } catch (error) {
+        console.error("Error fetching balance:", error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (account) {
       fetchBalance();
     }
-  }, [account, connected]);
-  async function mintCoin(admin: Account, receiver: string, amount: number): Promise<string> {
-    const transaction = await aptos.transaction.build.simple({
-      sender: admin.accountAddress,
-      data: {
-        function: `${moduleAddress}::tele_point::mint`,
-        functionArguments: [receiver, amount],
-      },
-    });
+  }, [account]);
 
-    const senderAuthenticator = await aptos.transaction.sign({ signer: admin, transaction });
-    const pendingTxn = await aptos.transaction.submit.simple({ transaction, senderAuthenticator });
+  const handleGuessesChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setGuesses(e.target.value);
+  };
 
-    return pendingTxn.hash;
-  }
-  async function transferCoin(
-    admin: Account,
-    fromAddress: string,
-    toAddress: string,
-    amount: number,
-  ): Promise<string> {
-    const transaction = await aptos.transaction.build.simple({
-      sender: admin.accountAddress,
-      data: {
-        function: `${admin.accountAddress}::tele_point::transfer`,
-        functionArguments: [fromAddress, toAddress, amount],
-      },
-    });
+  const handleSubmit = () => {
+    // Implement game logic here
+  };
 
-    const senderAuthenticator = await aptos.transaction.sign({ signer: admin, transaction });
-    const pendingTxn = await aptos.transaction.submit.simple({ transaction, senderAuthenticator });
+  const handleMintToken = async () => {
+    // Implement token minting logic here
+  };
 
-    return pendingTxn.hash;
-  }
-  const start_movelette = async (
-    min: number,
-    max: number,
-    data: U64[],
-    amt: number,
-    winning_amt: number
-  ) => {
-    if (!account) return [];
-    const serializer = new Serializer();
-    const movevector = new MoveVector<U64>(data);
-    movevector.serialize(serializer);
-    const transaction = await aptos.transaction.build.simple({
-      sender: admin.accountAddress,
-      data: {
-        function: `${moduleAddress}::tele_point::winner_decision`,
-        functionArguments: [
-          account.address,
-          min,
-          max,
-          movevector,
-          amt,
-          winning_amt,
-        ],
-      },
-    });
-    try {
-      const senderAuthenticator = await aptos.transaction.sign({
-        signer: admin,
-        transaction,
-      });
-      const response = await aptos.transaction.submit.simple({
-        transaction,
-        senderAuthenticator,
-      });
-      await aptos.waitForTransaction({ transactionHash: response.hash });
-    } catch (error: any) {
-      console.error(error);
-    } finally {
-      const oldbalance = balance;
-      const newbalance = await getFaBalance(account.address, token);
-      setBalance(newbalance / 100000000);
-      setWin(newbalance !== oldbalance * 100000000 - amt);
-      setResult(
-        `Result: ${newbalance !== oldbalance * 100000000 - amt ? "Win" : "Lose"
-        }`
-      );
-    }
+  const handletokenTransfer = async (amt: number) => {
+    // Implement token transfer logic here
+  };
+
+  const handleRedeemClick = () => {
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
   };
 
   const nftData: NFTItem[] = [
@@ -181,10 +123,9 @@ const App: React.FC = () => {
     var data = {
       action: "Add Sticker",
       prompt: prompt,
-      wallet: account?.address,
+      wallet: account?.publicKey,
       negative_prompt: negative_prompt,
     };
-    // Transfer TELE to admin.walleadress
     handletokenTransfer(amt);
     window.Telegram.WebApp.sendData(JSON.stringify(data));
   };
@@ -198,42 +139,6 @@ const App: React.FC = () => {
   const handleRangeChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setRange((prev) => ({ ...prev, [name]: parseInt(value, 10) }));
-  };
-
-  const handleGuessesChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setGuesses(e.target.value);
-  };
-
-  const handleSubmit = () => {
-    const guessArray = guesses.split(",").map(Number);
-    const u64_guessArray = guessArray.map((item) => new U64(item));
-    const len = guessArray.length;
-    const amt = len * 10 * 10000000;
-    const winamt =
-      (range.max - range.min + 1 - guessArray.length) * 10 * 10000000;
-    start_movelette(range.min, range.max, u64_guessArray, amt, winamt);
-  };
-
-  const handleMintToken = async () => {
-    if (account) {
-      mintCoin(admin, account?.address, 100 * 100000000);
-      const newbalance = await getFaBalance(account.address, token);
-      setBalance(newbalance / 100000000);
-    }
-  };
-  const handletokenTransfer = async (amt: number) => {
-    if (account) {
-      transferCoin(admin, account?.address, admin.accountAddress.toString(), amt * 100000000);
-      const newbalance = await getFaBalance(account.address, token);
-      setBalance(newbalance / 100000000);
-    }
-  };
-  const handleRedeemClick = () => {
-    setShowModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
   };
 
   return (
@@ -254,6 +159,8 @@ const App: React.FC = () => {
           onRangeChange={handleRangeChange}
           onGuessesChange={handleGuessesChange}
           onSubmit={handleSubmit}
+          createKeypair={createKeypair}
+          fundAccount={fundAccount} // Pass fundAccount as a prop
         />
       )}
       <RedeemModal
@@ -268,4 +175,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-

@@ -32,13 +32,7 @@ const RedeemModal: React.FC<RedeemModalProps> = ({
         <h2 className="text-2xl font-bold mb-4 text-center">
           Redeem Through Stickers
         </h2>
-        <div className="flex justify-between items-center mb-4">
-          <p>Balance: $TELE {balance.toFixed(2)}</p>
-          <button className="bg-green-500 text-white py-2 px-4 rounded">
-            Order!
-          </button>
-        </div>
-        <div className="flex justify-center space-x-4">
+        <div className="grid grid-cols-2 gap-4">
           {nftData.map((item) => (
             <div
               key={item.id}
@@ -49,7 +43,7 @@ const RedeemModal: React.FC<RedeemModalProps> = ({
                 className="w-32 h-32 mb-2"
               />
               <p className="text-lg">
-                {item.title} - $TELE {item.price}
+                {item.title} - DIAM {item.price}
               </p>
               <button
                 onClick={() => onMintNFT(item.price, item.keywords, item.negative)}

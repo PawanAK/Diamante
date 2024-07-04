@@ -12,9 +12,9 @@ const Hero: React.FC<HeroProps> = ({ onGetStarted }) => {
       <div className="arcade-instructions">
         <h2>How to Play</h2>
         <ol>
-          <li>Buy $TELE tokens</li>
-          <li>Play games to earn $TELE</li>
-          <li>Use $TELE tokens to generate stickers</li>
+          <li>Buy DIAM tokens</li>
+          <li>Play games to earn DIAM</li>
+          <li>Use DIAM tokens to generate stickers</li>
         </ol>
       </div>
       <button className="cta-button" onClick={onGetStarted}>
