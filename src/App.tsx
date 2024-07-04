@@ -15,6 +15,11 @@ import {
 import "@aptos-labs/wallet-adapter-ant-design/dist/index.css";
 import "./App.css";
 
+import Header from './components/Header';
+import Hero from './components/Hero';
+import GameSection from './components/GameSection';
+import RedeemModal from './components/RedeemModal';
+
 interface Range {
   min: number;
   max: number;
@@ -233,168 +238,34 @@ const App: React.FC = () => {
 
   return (
     <div className="landing-page">
-      <header className="header">
-        <nav className="navbar">
-          <div className="logo">Move-Lette Arcade</div>
-        </nav>
-      </header>
-
-      <section className="hero">
-        <h1>Welcome to Move-Lette Arcade</h1>
-        <p>Step into the future of gaming with decentralized technology!</p>
-        <div className="arcade-instructions">
-          <h2>How to Play</h2>
-          <ol>
-            <li>Buy $TELE tokens</li>
-            <li>Play games to earn $TELE</li>
-            <li>Use $TELE tokens to generate stickers</li>
-          </ol>
-        </div>
-        <button className="cta-button" onClick={() => setShowGame(true)}>
-          Get Started
-        </button>
-      </section>
-
+      <Header />
+      <Hero onGetStarted={() => setShowGame(true)} />
       {showGame && (
-        <div className="game-section">
-          {!connected ? (
-            <div className="flex justify-center mb-4">
-              <WalletSelector />
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center mb-4">
-              <button
-                className="bg-blue-500 text-white py-2 px-4 rounded mb-2"
-                onClick={() => {
-                  if (account?.address) {
-                    navigator.clipboard.writeText(account.address);
-                  } else {
-                    console.error("No address available to copy.");
-                  }
-                }}>
-                {account?.address
-                  ? `${account.address.slice(0, 6)}...${account.address.slice(
-                    -4
-                  )}`
-                  : "No Address"}
-              </button>
-              <div className="text-black text-center mb-2">
-                <p>Balance: $TELE {balance.toFixed(2)}</p>
-              </div>
-              <button
-                onClick={handleRedeemClick}
-                className="bg-yellow-500 text-white py-2 px-4 rounded mb-2">
-                Redeem
-              </button>
-              <button
-                onClick={() => handleMintToken()}
-                className="bg-green-500 text-white py-2 px-4 rounded mb-2">
-                Buy $TELE Tokens
-              </button>
-            </div>
-          )}
-          {connected && (
-            <>
-              <h1 className="text-2xl font-bold mb-4 text-center">
-                Move-Lette
-              </h1>
-              <div className="flex mb-4">
-                <input
-                  type="number"
-                  name="min"
-                  value={range.min}
-                  onChange={handleRangeChange}
-                  className="border p-2 mr-2 w-full arcade-input"
-                />
-                <span className="self-center">to</span>
-                <input
-                  type="number"
-                  name="max"
-                  value={range.max}
-                  onChange={handleRangeChange}
-                  className="border p-2 ml-2 w-full arcade-input"
-                />
-              </div>
-              <input
-                type="text"
-                value={guesses}
-                onChange={handleGuessesChange}
-                placeholder="Enter your guesses (e.g., 1,4,5)"
-                className="border p-2 w-full mb-4 arcade-input"
-              />
-              <button
-                onClick={handleSubmit}
-                className="bg-blue-500 text-white py-2 px-4 rounded mb-4 w-full arcade-button">
-                Set Range & Start
-              </button>
-              <div className="text-center mb-4 arcade-info">
-                <p>Cost = {cost} $TELE</p>
-                <p>
-                  Winning Chance = {guesses.split(",").length}/
-                  {range.max - range.min + 1} ={" "}
-                  {(
-                    guesses.split(",").length /
-                    (range.max - range.min + 1)
-                  ).toFixed(1)}
-                </p>
-                <p>
-                  Potential Win:{" "}
-                  {(range.max - range.min + 1 - guesses.split(",").length) * 1}{" "}
-                  $TELE
-                </p>
-              </div>
-              {result && (
-                <div className="text-xl font-bold mb-4 text-center arcade-result">
-                  <p>{result}</p>
-                </div>
-              )}
-              {showModal && (
-                <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
-                  <div className="bg-white p-6 rounded-lg shadow-lg w-2/3 arcade-modal">
-                    <h2 className="text-2xl font-bold mb-4 text-center">
-                      Redeem Through Stickers
-                    </h2>
-                    <div className="flex justify-between items-center mb-4">
-                      <p>Balance: $TELE {balance.toFixed(2)}</p>
-                      <button className="bg-green-500 text-white py-2 px-4 rounded">
-                        Order!
-                      </button>
-                    </div>
-                    <div className="flex justify-center space-x-4">
-                      {nftData.map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex flex-col items-center bg-gray-200 p-4 rounded-lg arcade-item">
-                          <img
-                            src={item.Image}
-                            alt={item.title}
-                            className="w-32 h-32 mb-2"
-                          />
-                          <p className="text-lg">
-                            {item.title} - $TELE {item.price}
-                          </p>
-                          <button
-                            onClick={() => mint_nftpack(item.price, item.keywords, item.negative)}
-                            className="mt-2 bg-yellow-500 text-white py-2 px-4 rounded arcade-button">
-                            Mint
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                    <button
-                      onClick={handleCloseModal}
-                      className="mt-4 bg-red-500 text-white py-2 px-4 rounded arcade-button">
-                      Close
-                    </button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
+        <GameSection
+          connected={connected}
+          account={account}
+          balance={balance}
+          range={range}
+          guesses={guesses}
+          cost={cost}
+          result={result}
+          onRedeemClick={handleRedeemClick}
+          onMintToken={handleMintToken}
+          onRangeChange={handleRangeChange}
+          onGuessesChange={handleGuessesChange}
+          onSubmit={handleSubmit}
+        />
       )}
+      <RedeemModal
+        showModal={showModal}
+        balance={balance}
+        nftData={nftData}
+        onClose={handleCloseModal}
+        onMintNFT={mint_nftpack}
+      />
     </div>
   );
 };
 
 export default App;
+
