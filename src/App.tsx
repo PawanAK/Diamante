@@ -44,12 +44,14 @@ const App: React.FC = () => {
   }, [guesses]);
 
   const createKeypair = async () => {
-    try {
-      const response = await axios.post("http://localhost:3001/create-keypair");
-      setAccount(response.data);
-      setConnected(true);
-    } catch (error) {
-      console.error("Error creating keypair:", error);
+    if (!account) { // Check if account already exists
+      try {
+        const response = await axios.post("http://localhost:3001/create-keypair");
+        setAccount(response.data);
+        setConnected(true);
+      } catch (error) {
+        console.error("Error creating keypair:", error);
+      }
     }
   };
 
@@ -96,6 +98,15 @@ const App: React.FC = () => {
 
   const handleSubmit = () => {
     // Implement game logic here
+    const guessArray = guesses.split(",").map(Number);
+    const randomNumber = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
+    if (guessArray.includes(randomNumber)) {
+      setResult("You win!");
+      setWin(true);
+    } else {
+      setResult("You lose!");
+      setWin(false);
+    }
   };
 
   const handleMintToken = async () => {

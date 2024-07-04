@@ -22,8 +22,8 @@ const MoveLette: React.FC<MoveletteProps> = ({
 }) => {
   return (
     <>
-      <h1 className="text-2xl font-bold mb-4 text-center">Move-Lette</h1>
-      <div className="flex mb-4">
+      <div className="flex flex-col items-center mb-4">
+        <label className="mb-2">Range:</label>
         <input
           type="number"
           name="min"
